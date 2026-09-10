@@ -1,0 +1,59 @@
+import os
+
+
+def tokenize(expression):
+    tokens = []
+    i = 0
+
+    while i < len(expression):
+        ch = expression[i]
+
+        # Ignore spaces
+        if ch.isspace():
+            i += 1
+            continue
+
+        # Read numbers
+        if ch.isdigit():
+            start = i
+
+            while i < len(expression) and expression[i].isdigit():
+                i += 1
+
+            # Check for decimal numbers
+            if i < len(expression) and expression[i] == ".":
+                i += 1
+
+                if i >= len(expression) or not expression[i].isdigit():
+                    raise ValueError("Invalid number")
+
+                while i < len(expression) and expression[i].isdigit():
+                    i += 1
+
+            tokens.append(("NUM", expression[start:i]))
+            continue
+
+        # Operators
+        if ch in "+-*/%^":
+            tokens.append(("OP", ch))
+            i += 1
+            continue
+
+        # Opening parenthesis
+        if ch == "(":
+            tokens.append(("LPAREN", ch))
+            i += 1
+            continue
+
+        # Closing parenthesis
+        if ch == ")":
+            tokens.append(("RPAREN", ch))
+            i += 1
+            continue
+
+        # Invalid character
+        raise ValueError("Invalid character")
+
+    tokens.append(("END", ""))
+
+    return tokens
