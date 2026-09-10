@@ -263,3 +263,79 @@ def format_result(value):
 
     # Otherwise round to maximum 4 decimal places
     return f"{value:.4f}".rstrip("0").rstrip(".")
+
+# -------------------------------------------------
+# MAIN ASSIGNMENT FUNCTION
+# -------------------------------------------------
+
+def evaluate_file(input_path: str) -> list[dict]:
+
+    results = []
+    output_lines = []
+
+    # Read expressions from input file
+    with open(input_path, "r", encoding="utf-8") as file:
+        expressions = file.readlines()
+
+    # Process each expression
+    for line in expressions:
+
+        expression = line.rstrip("\r\n")
+
+        tree_text = "ERROR"
+        token_text = "ERROR"
+        result_value = "ERROR"
+        result_text = "ERROR"
+
+        try:
+            # Tokenize the expression
+            tokens = tokenize(expression)
+
+            token_text = tokens_to_string(tokens)
+
+            # Parse the tokens
+            tree = parse_tokens(tokens)
+
+            tree_text = tree_to_string(tree)
+
+            # Calculate result
+            try:
+                value = evaluate_tree(tree)
+
+                result_value = float(value)
+
+                result_text = format_result(result_value)
+
+            except (ZeroDivisionError, OverflowError, ValueError):
+                result_value = "ERROR"
+                result_text = "ERROR"
+
+        except ValueError:
+            tree_text = "ERROR"
+            token_text = "ERROR"
+
+        # Add result to returned list
+        results.append({
+            "input": expression,
+            "tree": tree_text,
+            "tokens": token_text,
+            "result": result_value
+        })
+
+        # Add result to output.txt
+        output_lines.append("Input: " + expression)
+        output_lines.append("Tree: " + tree_text)
+        output_lines.append("Tokens: " + token_text)
+        output_lines.append("Result: " + result_text)
+        output_lines.append("")
+
+    # Save output.txt in same directory as input file
+    output_path = os.path.join(
+        os.path.dirname(input_path),
+        "output.txt"
+    )
+
+    with open(output_path, "w", encoding="utf-8") as file:
+        file.write("\n".join(output_lines))
+
+    return results
