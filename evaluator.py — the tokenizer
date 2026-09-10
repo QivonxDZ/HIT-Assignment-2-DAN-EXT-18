@@ -57,3 +57,113 @@ def tokenize(expression):
     tokens.append(("END", ""))
 
     return tokens
+
+# -------------------------------------------------
+# PARSER
+# -------------------------------------------------
+
+def parse_expression(tokens, pos):
+    left, pos = parse_term(tokens, pos)
+
+    while tokens[pos][0] == "OP" and tokens[pos][1] in "+-":
+        op = tokens[pos][1]
+        pos += 1
+
+        right, pos = parse_term(tokens, pos)
+
+        left = ("bin", op, left, right)
+
+    return left, pos
+
+
+def parse_term(tokens, pos):
+    left, pos = parse_unary(tokens, pos)
+
+    while True:
+
+        # Multiplication, division and modulus
+        if tokens[pos][0] == "OP" and tokens[pos][1] in "*/%":
+            op = tokens[pos][1]
+            pos += 1
+
+            right, pos = parse_unary(tokens, pos)
+
+            left = ("bin", op, left, right)
+
+        # Implicit multiplication, e.g. 2(3 + 4)
+        elif tokens[pos][0] == "LPAREN":
+            right, pos = parse_unary(tokens, pos)
+
+            left = ("bin", "*", left, right)
+
+        # Implicit multiplication, e.g. (2)3
+        elif tokens[pos][0] == "NUM" and tokens[pos - 1][0] == "RPAREN":
+            right, pos = parse_unary(tokens, pos)
+
+            left = ("bin", "*", left, right)
+
+        else:
+            break
+
+    return left, pos
+
+
+def parse_unary(tokens, pos):
+
+    # Unary negative
+    if tokens[pos] == ("OP", "-"):
+        pos += 1
+
+        operand, pos = parse_unary(tokens, pos)
+
+        return ("neg", operand), pos
+
+    # Unary + is not allowed
+    if tokens[pos] == ("OP", "+"):
+        raise ValueError("Unary plus is not supported")
+
+    return parse_power(tokens, pos)
+
+
+def parse_power(tokens, pos):
+    left, pos = parse_primary(tokens, pos)
+
+    # Exponentiation is right associative
+    if tokens[pos] == ("OP", "^"):
+        pos += 1
+
+        right, pos = parse_unary(tokens, pos)
+
+        left = ("bin", "^", left, right)
+
+    return left, pos
+
+
+def parse_primary(tokens, pos):
+    token_type, token_value = tokens[pos]
+
+    # Number
+    if token_type == "NUM":
+        return ("num", float(token_value), token_value), pos + 1
+
+    # Parenthesised expression
+    if token_type == "LPAREN":
+        pos += 1
+
+        node, pos = parse_expression(tokens, pos)
+
+        if tokens[pos][0] != "RPAREN":
+            raise ValueError("Missing closing parenthesis")
+
+        return node, pos + 1
+
+    raise ValueError("Expected a number or parenthesis")
+
+
+def parse_tokens(tokens):
+    tree, pos = parse_expression(tokens, 0)
+
+    if tokens[pos][0] != "END":
+        raise ValueError("Unexpected token")
+
+    return tree
