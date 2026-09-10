@@ -339,3 +339,13 @@ def evaluate_file(input_path: str) -> list[dict]:
         file.write("\n".join(output_lines))
 
     return results
+
+# -------------------------------------------------
+# RUN PROGRAM
+# -------------------------------------------------
+
+if __name__ == "__main__":
+
+    evaluate_file("sample_input.txt")
+
+    print("Finished. Check output.txt")
